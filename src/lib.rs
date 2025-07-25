@@ -133,6 +133,50 @@ impl Uffd {
         Ok(())
     }
 
+    /// Atomically move a continuous memory chunk into the userfaultfd-registered range, and return
+    /// the number of bytes that were successfully moved. This is similar to copy but moves instead
+    ///
+    /// If `wake` is `true`, wake up the thread waiting for page fault resolution on the memory
+    /// range.
+    pub unsafe fn move_memory(
+        &self,
+        src: *const c_void,
+        dst: *mut c_void,
+        len: usize,
+        allow_src_hole: bool,
+        wake: bool,
+    ) -> Result<usize> {
+        let mut move_ = raw::uffdio_move {
+            src: src as u64,
+            dst: dst as u64,
+            len: len as u64,
+            mode: if wake {
+                0
+            } else {
+                raw::UFFDIO_MOVE_MODE_DONTWAKE
+            },
+            move_: 0,
+        };
+        
+        if allow_src_hole {
+            move_.mode |= raw::UFFDIO_MOVE_MODE_ALLOW_SRC_HOLE;
+        }
+
+        let _ =
+            raw::move_(self.as_raw_fd(), &mut move_ as *mut raw::uffdio_move).map_err(|errno| {
+                match errno {
+                    Errno::EAGAIN => Error::PartiallyCopied(move_.move_ as usize),
+                    _ => Error::CopyFailed(errno),
+                }
+            })?;
+        if move_.move_ < 0 {
+            // shouldn't ever get here, as errno should be caught above
+            Err(Error::CopyFailed(Errno::from_i32(-move_.move_ as i32)))
+        } else {
+            Ok(move_.move_ as usize)
+        }
+    }
+    
     /// Atomically copy a continuous memory chunk into the userfaultfd-registered range, and return
     /// the number of bytes that were successfully copied.
     ///
@@ -377,6 +421,10 @@ bitflags! {
         #[cfg(feature = "linux5_7")]
         const WRITE_PROTECT = 1 << raw::_UFFDIO_WRITEPROTECT;
         const API = 1 << raw::_UFFDIO_API;
+        // Added by https://github.com/torvalds/linux/commit/adef440691bab824e39c1b17382322d195e1fab0
+        // and appear on version 6.8 according
+        #[cfg(feature = "linux6_8")]
+        const MOVE = 1 << raw::_UFFDIO_MOVE;
 
         /// Unknown ioctls flags are allowed to be robust to future kernel changes.
         const _ = !0;

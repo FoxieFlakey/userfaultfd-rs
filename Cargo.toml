@@ -23,3 +23,4 @@ nix = { version = "0.27", features = ["poll", "mman", "feature"] }
 default = []
 linux4_14 = ["userfaultfd-sys/linux4_14", "nix/process"]
 linux5_7 = ["userfaultfd-sys/linux5_7"]
+linux6_8 = ["userfaultfd-sys/linux6_8"]

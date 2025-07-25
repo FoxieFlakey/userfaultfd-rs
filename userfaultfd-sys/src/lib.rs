@@ -10,7 +10,11 @@
 use cfg_if::cfg_if;
 
 cfg_if! {
-    if #[cfg(feature = "linux5_7")] {
+    if #[cfg(feature = "linux6_8")] {
+        mod linux6_8;
+        pub use crate::linux6_8::*;
+    }
+    else if #[cfg(feature = "linux5_7")] {
         mod linux5_7;
         pub use crate::linux5_7::*;
     }
