@@ -93,3 +93,8 @@ const __u32 _const_UFFDIO_CONTINUE = UFFDIO_CONTINUE;
 #ifdef USERFAULTFD_IOC
 const __u32 _const_USERFAULTFD_IOC = USERFAULTFD_IOC;
 #endif
+
+#ifdef UFFDIO_MOVE
+const __u32 _const_UFFDIO_MOVE = UFFDIO_MOVE;
+#endif
+
