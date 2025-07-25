@@ -1,3 +1,5 @@
+use std::mem::transmute_copy;
+
 use super::*;
 
 // The following are preprocessor constants that bindgen can't figure out, so we enter them manually
@@ -26,13 +28,23 @@ pub const UFFDIO_COPY_MODE_WP: u64 = 1 << 1;
 
 pub const UFFDIO_ZEROPAGE_MODE_DONTWAKE: u64 = 1 << 0;
 
-pub const UFFDIO_API: u32 = 0xc018aa3f;
-pub const UFFDIO_REGISTER: u32 = 0xc020aa00;
-pub const UFFDIO_UNREGISTER: u32 = 0x8010aa01;
-pub const UFFDIO_WAKE: u32 = 0x8010aa02;
-pub const UFFDIO_COPY: u32 = 0xc028aa03;
-pub const UFFDIO_ZEROPAGE: u32 = 0xc020aa04;
-pub const UFFDIO_WRITEPROTECT: u32 = 0xc018aa06;
+// 1:1 equivalent to _IOWR except that the third parameter become generic
+const fn iowr<T>(arg1: u32, arg2: u32) -> u32 {
+    unsafe { transmute_copy::<i32, u32>(&nix::request_code_readwrite!(arg1, arg2, size_of::<T>())) }
+}
+
+// 1:1 equivalent to _IOR except that the third parameter become generic
+const fn ior<T>(arg1: u32, arg2: u32) -> u32 {
+    unsafe { transmute_copy::<i32, u32>(&nix::request_code_read!(arg1, arg2, size_of::<T>())) }
+}
+
+pub const UFFDIO_API: u32 = iowr::<uffdio_api>(UFFDIO as u32, _UFFDIO_API as u32);
+pub const UFFDIO_REGISTER: u32 = iowr::<uffdio_register>(UFFDIO as u32, _UFFDIO_REGISTER as u32);
+pub const UFFDIO_UNREGISTER: u32 = ior::<uffdio_range>(UFFDIO as u32, _UFFDIO_UNREGISTER as u32);
+pub const UFFDIO_WAKE: u32 = ior::<uffdio_range>(UFFDIO as u32, _UFFDIO_WAKE as u32);
+pub const UFFDIO_COPY: u32 = iowr::<uffdio_copy>(UFFDIO as u32, _UFFDIO_COPY as u32);
+pub const UFFDIO_ZEROPAGE: u32 = iowr::<uffdio_zeropage>(UFFDIO as u32, _UFFDIO_ZEROPAGE as u32);
+pub const UFFDIO_WRITEPROTECT: u32 = iowr::<uffdio_writeprotect>(UFFDIO as u32, _UFFDIO_WRITEPROTECT as u32);
 
 #[cfg(test)]
 mod const_tests {
