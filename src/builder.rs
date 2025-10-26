@@ -24,6 +24,8 @@ cfg_if::cfg_if! {
                 const EVENT_UNMAP = raw::UFFD_FEATURE_EVENT_UNMAP;
                 const SIGBUS = raw::UFFD_FEATURE_SIGBUS;
                 const THREAD_ID = raw::UFFD_FEATURE_THREAD_ID;
+                #[cfg(feature = "linux6_8")]
+                const MOVE = raw::UFFD_FEATURE_MOVE;
             }
         }
     } else {
@@ -58,8 +60,7 @@ pub struct UffdBuilder {
     close_on_exec: bool,
     non_blocking: bool,
     user_mode_only: bool,
-    req_features: FeatureFlags,
-    req_ioctls: IoctlFlags,
+    req_features: FeatureFlags
 }
 
 impl UffdBuilder {
@@ -70,8 +71,7 @@ impl UffdBuilder {
             close_on_exec: false,
             non_blocking: false,
             user_mode_only: true,
-            req_features: FeatureFlags::empty(),
-            req_ioctls: IoctlFlags::empty(),
+            req_features: FeatureFlags::empty()
         }
     }
 
@@ -109,14 +109,6 @@ impl UffdBuilder {
     /// If a required feature is unavailable, `UffdBuilder.create()` will return an error.
     pub fn require_features(&mut self, feature: FeatureFlags) -> &mut Self {
         self.req_features |= feature;
-        self
-    }
-
-    /// Add a requirement that a particular ioctl or set of ioctls is available.
-    ///
-    /// If a required ioctl is unavailable, `UffdBuilder.create()` will return an error.
-    pub fn require_ioctls(&mut self, ioctls: IoctlFlags) -> &mut Self {
-        self.req_ioctls |= ioctls;
         self
     }
 
@@ -188,8 +180,8 @@ impl UffdBuilder {
             raw::api(uffd.fd, &mut api as *mut raw::uffdio_api)?;
         }
         let supported = IoctlFlags::from_bits_retain(api.ioctls);
-        if !supported.contains(self.req_ioctls) {
-            Err(Error::UnsupportedIoctls(supported))
+        if !supported.contains(IoctlFlags::API | IoctlFlags::REGISTER | IoctlFlags::UNREGISTER) {
+            panic!("Kernel acting strange? owo");
         } else {
             Ok(uffd)
         }
