@@ -388,7 +388,7 @@ impl Uffd {
             std::slice::from_raw_parts_mut(msgs.as_mut_ptr() as _, msgs.len() * MSG_SIZE)
         };
 
-        let count = match read(self.as_raw_fd(), buf) {
+        let count = match read(self.as_fd(), buf) {
             Err(e) if e == Errno::EAGAIN => 0,
             Err(e) => return Err(Error::SystemError(e)),
             Ok(0) => return Err(Error::ReadEof),
