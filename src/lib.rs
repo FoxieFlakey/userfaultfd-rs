@@ -171,7 +171,7 @@ impl Uffd {
             })?;
         if move_.move_ < 0 {
             // shouldn't ever get here, as errno should be caught above
-            Err(Error::CopyFailed(Errno::from_i32(-move_.move_ as i32)))
+            Err(Error::CopyFailed(Errno::from_raw(-move_.move_ as i32)))
         } else {
             Ok(move_.move_ as usize)
         }
@@ -210,7 +210,7 @@ impl Uffd {
             })?;
         if copy.copy < 0 {
             // shouldn't ever get here, as errno should be caught above
-            Err(Error::CopyFailed(Errno::from_i32(-copy.copy as i32)))
+            Err(Error::CopyFailed(Errno::from_raw(-copy.copy as i32)))
         } else {
             Ok(copy.copy as usize)
         }
@@ -239,7 +239,7 @@ impl Uffd {
             .map_err(Error::ZeropageFailed)?;
         if zeropage.zeropage < 0 {
             // shouldn't ever get here, as errno should be caught above
-            Err(Error::ZeropageFailed(Errno::from_i32(
+            Err(Error::ZeropageFailed(Errno::from_raw(
                 -zeropage.zeropage as i32,
             )))
         } else {
