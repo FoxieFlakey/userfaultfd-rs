@@ -138,6 +138,7 @@ impl Uffd {
     ///
     /// If `wake` is `true`, wake up the thread waiting for page fault resolution on the memory
     /// range.
+    #[cfg(feature = "linux6_8")]
     pub unsafe fn move_memory(
         &self,
         src: *const c_void,
