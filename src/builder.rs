@@ -168,6 +168,8 @@ impl UffdBuilder {
             flags |= raw::UFFD_USER_MODE_ONLY as i32;
         }
 
+        flags |= raw::UFFDIO_REGISTER_MODE_MISSING as i32;
+
         let uffd = self.open_file_descriptor(flags)?;
 
         // then do the UFFDIO_API ioctl to set up and ensure features and other ioctls are available
